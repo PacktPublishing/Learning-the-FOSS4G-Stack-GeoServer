@@ -1,0 +1,65 @@
+residential / commercial parcels:
+
+	propclass = 'Residential'
+
+	propclass IN('Residential','Commercial')
+
+watersheds:
+
+	watershed = 'Fall Creek'
+
+--- CROSS LAYER FILTERING
+-- https://docs.geoserver.org/stable/en/user/extensions/querylayer/index.html
+--- INSTALL querylayer module
+
+parcels in flood zone:
+
+	INTERSECTS(geom, querySingle('floodzones', 'geom','zone = ''A'''))
+
+	INTERSECTS(geom, collectGeometries(queryCollection('floodzones', 'geom','zone = ''AE''')))
+
+parcels in a watershed:
+
+	INTERSECTS(geom, collectGeometries(queryCollection('watersheds', 'geom','watershed = ''Six Mile Creek''')))
+
+	within(geom, collectGeometries(queryCollection('watersheds', 'geom','watershed = ''Six Mile Creek''')))
+
+
+	within(geom, buffer(collectGeometries(queryCollection('watersheds', 'geom','watershed = ''Six Mile Creek''')),500))
+
+	DWITHIN(geom, collectGeometries(queryCollection('watersheds', 'geom','watershed = ''Six Mile Creek''')),100,feet)
+
+passing the url:
+
+Residential properties: 
+
+http://localhost:8080/geoserver/foss4g/wms?service=WMS&version=1.1.0&request=GetMap&layers=foss4g:parcels&bbox=360567.0,4679918.0,398090.375,4720466.5&width=710&height=768&CQL_FILTER=propclass = 'Residential'&srs=EPSG:32618&format=application/openlayers#
+
+http://localhost:8080/geoserver/foss4g/wms?service=WMS&version=1.1.0&request=GetMap&layers=foss4g:parcels&bbox=360567.0,4679918.0,398090.375,4720466.5&width=710&height=768&CQL_FILTER=propclass IN('Residential','Commercial')&srs=EPSG:32618&format=application/openlayers#
+
+parcels in floodzones:
+
+http://localhost:8080/geoserver/foss4g/wms?service=WMS&version=1.1.0&request=GetMap&layers=foss4g:parcels&bbox=360567.0,4679918.0,398090.375,4720466.5&width=710&height=768&CQL_FILTER=INTERSECTS(geom, collectGeometries(queryCollection('floodzones', 'geom','zone = ''AE''')))&srs=EPSG:32618&format=application/openlayers#
+
+parcels in watersheds:
+
+http://localhost:8080/geoserver/foss4g/wms?service=WMS&version=1.1.0&request=GetMap&layers=foss4g:parcels&bbox=360567.0,4679918.0,398090.375,4720466.5&width=710&height=768&CQL_FILTER=INTERSECTS(geom, collectGeometries(queryCollection('watersheds', 'geom','watershed = ''Six Mile Creek''')))&srs=EPSG:32618&format=application/openlayers#
+
+http://localhost:8080/geoserver/foss4g/wms?service=WMS&version=1.1.0&request=GetMap&layers=foss4g:parcels&bbox=360567.0,4679918.0,398090.375,4720466.5&width=710&height=768&CQL_FILTER=DWITHIN(geom, collectGeometries(queryCollection('watersheds', 'geom','watershed = ''Six Mile Creek''')),100,feet)&srs=EPSG:32618&format=application/openlayers#
+
+---------------------------------------------
+SQL View Example
+
+SELECT tcparcel.* 
+FROM tcparcel, floodzones
+WHERE ST_Intersects(tcparcel.geom,floodzones.geom)
+AND floodzones.zone = '%s%'
+
+http://localhost:8080/geoserver/foss4g/wms?
+service=WMS&version=1.1.0
+&request=GetMap
+&layers=foss4g:parcelfz
+&bbox=360567.018643545%2C4682115.32618644%2C398090.355142796%2C4720323.73539088&width=754&height=768
+&srs=EPSG%3A32618
+&viewparams=s:A
+&format=application/openlayers
